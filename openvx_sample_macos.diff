@@ -1,0 +1,428 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index da62eaa..b8d46bb 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -38,6 +38,10 @@ if (WIN32)
+     include( CMake_windows_tools )
+ elseif (ANDROID)
+     include( CMake_android_tools )
++elseif (APPLE)
++    include( CMake_apple_tools )
++		# TODO: added this to remove RPATH policy, why?
++		cmake_policy(SET CMP0042 NEW)
+ else ()
+     include( CMake_linux_tools )
+ endif ()
+@@ -51,6 +55,7 @@ set(CMAKE_CONFIGURATION_TYPES
+   )
+ set(CMAKE_CONFIGURATION_TYPES ${CMAKE_CONFIGURATION_TYPES} CACHE STRING "Available build configurations." FORCE)
+ 
++
+ option( OPENVX_USE_TILING OFF )
+ option( EXPERIMENTAL_USE_NODE_MEMORY OFF )
+ option( EXPERIMENTAL_USE_OPENMP OFF )
+@@ -62,14 +67,18 @@ option( EXPERIMENTAL_USE_VARIANTS OFF )
+ option( EXPERIMENTAL_USE_S16 OFF )
+ option( EXPERIMENTAL_PLATFORM_SUPPORTS_16_FLOAT OFF )
+ 
++# NOTE: APPLE (in cmake) is a type of UNIX!
+ if (UNIX OR ANDROID)
+     add_definitions( -D_XOPEN_SOURCE=700 -D_BSD_SOURCE=1 -D_GNU_SOURCE=1 )
+-    if (NOT (CYGWIN OR ANDROID))
+-        set( EXPERIMENTAL_USE_OPENMP ON )
+-    endif (NOT (CYGWIN OR ANDROID))
++	  # TODO: removed as was overriding openmp on macos
++		# There is no openmp for clang yet (see: http://clang-omp.github.io)	
++		if (NOT (CYGWIN OR ANDROID OR APPLE))
++		    set( EXPERIMENTAL_USE_OPENMP ON )
++		endif (NOT (CYGWIN OR ANDROID OR APPLE))
+     set( EXPERIMENTAL_USE_DOT ON )
+ endif (UNIX OR ANDROID)
+ 
++
+ add_definitions( -DOPENVX_BUILDING -DOPENVX_USE_SMP)
+ if (OPENVX_USE_TILING)
+     add_definitions( -DOPENVX_USE_TILING )
+@@ -157,4 +166,4 @@ add_subdirectory( kernels )
+ add_subdirectory( libraries )
+ add_subdirectory( sample )
+ add_subdirectory( tools )
+-add_subdirectory( include )
+\ No newline at end of file
++add_subdirectory( include )
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..79bbaea
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,21 @@
++# Sample OpenVX for MacOS/iOS
++
++This is a modified version of [OpenVX 1.0](https://www.khronos.org/openvx/) checked into git and updated to build on MacOS/iOS.
++
++**NOTE: this sample implementation has no (as yet) accelerated functionality for Apple hardware.**
++
++The basic build can be  performed on the command line via: 
++
++    > mkdir build
++    > cd build
++    > cmake -DAPPLE=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/path/to/install/to -DBUILD_X64=1 ..
++    > make
++    > make install
++
++(This is effectively what the homebrew formula does.)
++
++Enjoy!
++
++*The MwV Team*
++
++
+diff --git a/cmake_utils/CMakeFuncs.txt b/cmake_utils/CMakeFuncs.txt
+index d70a1c1..2193a81 100644
+--- a/cmake_utils/CMakeFuncs.txt
++++ b/cmake_utils/CMakeFuncs.txt
+@@ -44,7 +44,7 @@ macro( FILTER_SOURCES FILER_OUT_REGEXP )
+ 
+             list(APPEND SOURCE_FILES_TMP_2 ${RECOURCE_FILES_1})
+ 
+-        else () # Linux
++        else () # Linux / Mac
+ 
+             foreach(FILE ${HEADER_FILES_TMP})
+                 if ( NOT FILE MATCHES ^resource[.]h$|^stdafx[.]h$|_windows|_win32 AND NOT FILE MATCHES ${FILER_OUT_REGEXP})
+@@ -102,11 +102,13 @@ function ( FIND_NUM_PROCESSORS )
+   if ( WIN32 )
+     set(PROCESSOR_COUNT_T "$ENV{NUMBER_OF_PROCESSORS}")
+   else ( WIN32 )
+-	set(CPUINFO_FILE "/proc/cpuinfo")
+-	if(EXISTS "${CPUINFO_FILE}")
+-		file(STRINGS "${CPUINFO_FILE}" PROCS REGEX "^processor.: [0-9]+$")
+-		list(LENGTH PROCS PROCESSOR_COUNT_T)
+-	endif(EXISTS "${CPUINFO_FILE}")
++		if (APPLE)
++			set(PROCESSOR_COUNT_T "4") # TODO: mac: "system_profiler | grep Processor"
++		else (APPLE)	
++			set(CPUINFO_FILE "/proc/cpuinfo")
++			file(STRINGS "${CPUINFO_FILE}" PROCS REGEX "^processor.: [0-9]+$")
++			list(LENGTH PROCS PROCESSOR_COUNT_T)
++    endif (APPLE)
+   endif( WIN32 )
+   set( PROCESSOR_COUNT ${PROCESSOR_COUNT_T} PARENT_SCOPE )
+ endfunction ( FIND_NUM_PROCESSORS )
+diff --git a/cmake_utils/CMake_apple_tools.cmake b/cmake_utils/CMake_apple_tools.cmake
+new file mode 100644
+index 0000000..4212d9d
+--- /dev/null
++++ b/cmake_utils/CMake_apple_tools.cmake
+@@ -0,0 +1,86 @@
++#
++# Copyright (c) 2011-2014 The Khronos Group Inc.
++#
++# Permission is hereby granted, free of charge, to any person obtaining a
++# copy of this software and/or associated documentation files (the
++# "Materials"), to deal in the Materials without restriction, including
++# without limitation the rights to use, copy, modify, merge, publish,
++# distribute, sublicense, and/or sell copies of the Materials, and to
++# permit persons to whom the Materials are furnished to do so, subject to
++# the following conditions:
++#
++# The above copyright notice and this permission notice shall be included
++# in all copies or substantial portions of the Materials.
++#
++# THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
++# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
++# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
++# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
++# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
++# MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
++#
++
++# Options common to all projects.
++message(STATUS "** ** ** Enable Languages ** ** **")
++
++enable_language( C )
++enable_language( CXX )
++
++if(BUILD_X64)
++  set(ARCH_BIT -m64 )
++else()
++  if (TARGET_CPU STREQUAL "Atom")
++    # architecture will be according to ATOM
++    set(ARCH_BIT -m32 )
++  else ()
++    # need to force a more modern architecture than the degault m32 (i386).
++    set(ARCH_BIT "-m32 -march=core2" )
++  endif (TARGET_CPU STREQUAL "Atom")
++endif()
++
++
++# Compiler switches that CANNOT be modified during makefile generation
++set (ADD_COMMON_C_FLAGS         "${ARCH_BIT} -fPIC" )
++
++set (ADD_C_FLAGS                "${ADD_COMMON_C_FLAGS} -std=gnu99" )
++set (ADD_C_FLAGS_DEBUG          "-O0 -ggdb3 -D _DEBUG" )
++set (ADD_C_FLAGS_RELEASE        "-O2 -ggdb2 -U _DEBUG")
++set (ADD_C_FLAGS_RELWITHDEBINFO "-O2 -ggdb3 -U _DEBUG")
++
++set (ADD_CXX_FLAGS              "${ADD_COMMON_C_FLAGS}" )
++
++
++set(CMAKE_BUILD_WITH_INSTALL_RPATH    TRUE )   # build rpath as if already installed
++set(CMAKE_INSTALL_RPATH               "$ORIGIN::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::" ) # the rpath to use - search through installation dir only
++set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)   # do not use static link paths as rpath
++
++# C switches
++set( CMAKE_C_FLAGS                          "${CMAKE_C_FLAGS}                         ${ADD_C_FLAGS}")
++set( CMAKE_C_FLAGS_DEBUG                    "${CMAKE_C_FLAGS_DEBUG}                   ${ADD_C_FLAGS_DEBUG}")
++set( CMAKE_C_FLAGS_RELEASE                  "${CMAKE_C_FLAGS_RELEASE}                 ${ADD_C_FLAGS_RELEASE}")
++set( CMAKE_C_FLAGS_RELWITHDEBINFO           "${CMAKE_C_FLAGS_RELWITHDEBINFO}          ${ADD_C_FLAGS_RELWITHDEBINFO}")
++
++# C++ switches
++set( CMAKE_CXX_FLAGS                        "${CMAKE_CXX_FLAGS}                       ${ADD_CXX_FLAGS}")
++set( CMAKE_CXX_FLAGS_DEBUG                  "${CMAKE_CXX_FLAGS_DEBUG}                 ${ADD_C_FLAGS_DEBUG}")
++set( CMAKE_CXX_FLAGS_RELEASE                "${CMAKE_CXX_FLAGS_RELEASE}               ${ADD_C_FLAGS_RELEASE}")
++set( CMAKE_CXX_FLAGS_RELWITHDEBINFO         "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}        ${ADD_C_FLAGS_RELWITHDEBINFO}")
++
++# Linker switches - EXE
++set( CMAKE_EXE_LINKER_FLAGS                 "${INIT_LINKER_FLAGS}")
++
++# Linker switches - DLL
++set( CMAKE_SHARED_LINKER_FLAGS              "${INIT_LINKER_FLAGS}                     ${ADD_CMAKE_EXE_LINKER_FLAGS}")
++
++message(STATUS "\n\n** ** ** COMPILER Definitions ** ** **")
++message(STATUS "CMAKE_C_COMPILER        = ${CMAKE_C_COMPILER}")
++message(STATUS "CMAKE_C_FLAGS           = ${CMAKE_C_FLAGS}")
++message(STATUS "")
++message(STATUS "CMAKE_CXX_COMPILER      = ${CMAKE_CXX_COMPILER}")
++message(STATUS "CMAKE_CXX_FLAGS         = ${CMAKE_CXX_FLAGS}")
++message(STATUS "")
++message(STATUS "CMAKE_EXE_LINKER_FLAGS  = ${CMAKE_EXE_LINKER_FLAGS}")
++message(STATUS "")
++message(STATUS "CMAKE_BUILD_TOOL        = ${CMAKE_BUILD_TOOL}")
++
+diff --git a/cmake_utils/CMake_linux_tools.cmake b/cmake_utils/CMake_linux_tools.cmake
+index 6838758..63b919f 100644
+--- a/cmake_utils/CMake_linux_tools.cmake
++++ b/cmake_utils/CMake_linux_tools.cmake
+@@ -59,7 +59,7 @@ set (ADD_CXX_FLAGS              "${ADD_COMMON_C_FLAGS}" )
+ # Linker switches
+ 
+ if (NOT CYGWIN)
+-    set (INIT_LINKER_FLAGS          "-Wl,--enable-new-dtags" ) # --enable-new-dtags sets RUNPATH to the same value as RPATH
++    set (INIT_LINKER_FLAGS          "-Wl,--enable-new-dtags" )
+ endif (NOT CYGWIN)
+ 
+ # embed RPATH and RUNPATH to the binaries that assumes that everything is installed in the same directory
+diff --git a/debug/CMakeLists.txt b/debug/CMakeLists.txt
+index 65771b5..4bfd45a 100644
+--- a/debug/CMakeLists.txt
++++ b/debug/CMakeLists.txt
+@@ -35,7 +35,7 @@ add_library (${TARGET_NAME} ${SOURCE_FILES})
+ 
+ install ( TARGETS ${TARGET_NAME} 
+           RUNTIME DESTINATION bin
+-          ARCHIVE DESTINATION bin
+-          LIBRARY DESTINATION bin )
++          ARCHIVE DESTINATION lib 
++					LIBRARY DESTINATION lib ) # Moved libraries to lib - TODO: maybe only MACOS
+ 		  
+ set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${DEBUG_FOLDER} )
+diff --git a/examples/CMakeLists.txt b/examples/CMakeLists.txt
+index 7ea794c..5277710 100644
+--- a/examples/CMakeLists.txt
++++ b/examples/CMakeLists.txt
+@@ -83,12 +83,12 @@ endif (OPENVX_USE_TILING)
+ 
+ install ( TARGETS ${TARGET_NAME_XYZ_LIB} ${TARGET_NAME_XYZ} ${TARGET_NAME_EXAMPLE} ${TARGET_NAME_EXAMPLE_CODE} ${TARGET_NAME_EXAMPLE_TILING} ${TARGET_NAME_TILING_TEST}
+           RUNTIME DESTINATION bin
+-          ARCHIVE DESTINATION bin
+-          LIBRARY DESTINATION bin )
++          ARCHIVE DESTINATION lib
++					LIBRARY DESTINATION lib ) # Moved libraries to lib - TODO: maybe only MACOS
+ 		  
+ set_target_properties( ${TARGET_NAME_XYZ_LIB} PROPERTIES FOLDER ${EXAMPLES_FOLDER} )
+ set_target_properties( ${TARGET_NAME_XYZ} PROPERTIES FOLDER ${EXAMPLES_FOLDER} )
+ set_target_properties( ${TARGET_NAME_EXAMPLE} PROPERTIES FOLDER ${EXAMPLES_FOLDER} )
+ set_target_properties( ${TARGET_NAME_EXAMPLE_CODE} PROPERTIES FOLDER ${EXAMPLES_FOLDER} )
+ set_target_properties( ${TARGET_NAME_EXAMPLE_TILING} PROPERTIES FOLDER ${EXAMPLES_FOLDER} )
+-set_target_properties( ${TARGET_NAME_TILING_TEST} PROPERTIES FOLDER ${EXAMPLES_FOLDER} )
+\ No newline at end of file
++set_target_properties( ${TARGET_NAME_TILING_TEST} PROPERTIES FOLDER ${EXAMPLES_FOLDER} )
+diff --git a/helper/CMakeLists.txt b/helper/CMakeLists.txt
+index 212acdf..1eebf7e 100644
+--- a/helper/CMakeLists.txt
++++ b/helper/CMakeLists.txt
+@@ -35,7 +35,7 @@ add_library (${TARGET_NAME} ${SOURCE_FILES})
+ 
+ install ( TARGETS ${TARGET_NAME} 
+           RUNTIME DESTINATION bin
+-          ARCHIVE DESTINATION bin
+-          LIBRARY DESTINATION bin )
++          ARCHIVE DESTINATION lib  
++					LIBRARY DESTINATION lib ) # Update to put all libraries in right place TODO: maybe only MACOS
+ 		  
+ set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${HELPER_FOLDER} )
+diff --git a/kernels/c_model/CMakeLists.txt b/kernels/c_model/CMakeLists.txt
+index 40aaa88..62232ad 100644
+--- a/kernels/c_model/CMakeLists.txt
++++ b/kernels/c_model/CMakeLists.txt
+@@ -38,7 +38,7 @@ target_link_libraries( ${TARGET_NAME} openvx )
+ 
+ install ( TARGETS ${TARGET_NAME} 
+           RUNTIME DESTINATION bin
+-          ARCHIVE DESTINATION bin
+-          LIBRARY DESTINATION bin )
++          ARCHIVE DESTINATION lib 
++					LIBRARY DESTINATION lib ) # Changed location to lib - TODO: maybe only MACOS
+ 		  
+ set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${KERNELS_FOLDER} )
+diff --git a/kernels/debug/CMakeLists.txt b/kernels/debug/CMakeLists.txt
+index ad4a438..077356a 100644
+--- a/kernels/debug/CMakeLists.txt
++++ b/kernels/debug/CMakeLists.txt
+@@ -35,7 +35,7 @@ add_library (${TARGET_NAME} ${SOURCE_FILES})
+ 
+ install ( TARGETS ${TARGET_NAME} 
+           RUNTIME DESTINATION bin
+-          ARCHIVE DESTINATION bin
+-          LIBRARY DESTINATION bin )
++					ARCHIVE DESTINATION lib
++					LIBRARY DESTINATION lib ) # Changed location to lib - TODO: maybe only MACOS
+ 		  
+ set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${KERNELS_FOLDER} )
+diff --git a/kernels/extras/CMakeLists.txt b/kernels/extras/CMakeLists.txt
+index 775b9d3..ad9601a 100644
+--- a/kernels/extras/CMakeLists.txt
++++ b/kernels/extras/CMakeLists.txt
+@@ -35,7 +35,7 @@ add_library (${TARGET_NAME} ${SOURCE_FILES})
+ 
+ install ( TARGETS ${TARGET_NAME} 
+           RUNTIME DESTINATION bin
+-          ARCHIVE DESTINATION bin
+-          LIBRARY DESTINATION bin )
++          ARCHIVE DESTINATION lib
++					LIBRARY DESTINATION lib ) # Changed location to lib - TODO: maybe only MACOS
+ 		  
+ set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${KERNELS_FOLDER} )
+diff --git a/libraries/debug/CMakeLists.txt b/libraries/debug/CMakeLists.txt
+index 3d8177e..5dadc41 100644
+--- a/libraries/debug/CMakeLists.txt
++++ b/libraries/debug/CMakeLists.txt
+@@ -53,8 +53,8 @@ target_link_libraries( ${TARGET_NAME_2} openvx-helper openvx-debug_k-lib openvx
+ 
+ install ( TARGETS ${TARGET_NAME_1} ${TARGET_NAME_2}
+           RUNTIME DESTINATION bin
+-          ARCHIVE DESTINATION bin
+-          LIBRARY DESTINATION bin )
++          ARCHIVE DESTINATION lib 
++					LIBRARY DESTINATION lib ) # Changed location to lib - TODO: maybe only MACOS
+ 		  
+ set_target_properties( ${TARGET_NAME_1} PROPERTIES FOLDER ${LIBRARIES_DEBUG_FOLDER} )
+ set_target_properties( ${TARGET_NAME_2} PROPERTIES FOLDER ${LIBRARIES_DEBUG_FOLDER} )
+diff --git a/libraries/extras/CMakeLists.txt b/libraries/extras/CMakeLists.txt
+index 4ce7c66..493287c 100644
+--- a/libraries/extras/CMakeLists.txt
++++ b/libraries/extras/CMakeLists.txt
+@@ -55,8 +55,8 @@ target_link_libraries( ${TARGET_NAME_2} openvx-helper openvx-extras_k-lib openvx
+ 
+ install ( TARGETS ${TARGET_NAME_1} ${TARGET_NAME_2}
+           RUNTIME DESTINATION bin
+-          ARCHIVE DESTINATION bin
+-          LIBRARY DESTINATION bin )
++          ARCHIVE DESTINATION lib  
++					LIBRARY DESTINATION lib ) # Changed location to lib - TODO: maybe only MACOS
+ 		  
+ set_target_properties( ${TARGET_NAME_1} PROPERTIES FOLDER ${LIBRARIES_EXTRAS_FOLDER} )
+ set_target_properties( ${TARGET_NAME_2} PROPERTIES FOLDER ${LIBRARIES_EXTRAS_FOLDER} )
+diff --git a/sample/framework/CMakeLists.txt b/sample/framework/CMakeLists.txt
+index c3d99a4..b941997 100644
+--- a/sample/framework/CMakeLists.txt
++++ b/sample/framework/CMakeLists.txt
+@@ -40,40 +40,44 @@ FIND_SOURCES()
+ if ((WIN32) OR (CYGWIN))
+     set( DEF_FILE openvx.def )
+ endif ((WIN32) OR (CYGWIN))
+-
+-# add a target named ${TARGET_NAME}
+-add_library (${TARGET_NAME} SHARED ${SOURCE_FILES} ${DEF_FILE})
++	
++add_library (${TARGET_NAME} SHARED ${SOURCE_FILES} ${DEF_FILE}) 
+ 
+ set( LINK_ADDITIONAL )
+ 
+ if (NOT WIN32)
+-    list( APPEND LINK_ADDITIONAL dl m )
++		list( APPEND LINK_ADDITIONAL dl m )
+ 	if (ANDROID)
+-	    list( APPEND LINK_ADDITIONAL log )
++			list( APPEND LINK_ADDITIONAL log )
+ 	else (ANDROID)
+-	    list( APPEND LINK_ADDITIONAL pthread rt )
++		if (APPLE)
++			list( APPEND LINK_ADDITIONAL pthread )
++		else (APPLE)
++			list( APPEND LINK_ADDITIONAL pthread rt )
++		endif (APPLE)
+ 	endif (ANDROID)
+ endif (NOT WIN32)
+ 
+ if (EXPERIMENTAL_USE_OPENCL)
+-    if (OPENCL_LIB_PATH)
+-	    find_library(LIB_OPENCL OpenCL HINTS ${OPENCL_LIB_PATH})
++		if (OPENCL_LIB_PATH)
++			find_library(LIB_OPENCL OpenCL HINTS ${OPENCL_LIB_PATH})
+ 		if (NOT LIB_OPENCL)
+-		    message(FATAL_ERROR "Could not find OpenCL library")
++				message(FATAL_ERROR "Could not find OpenCL library")
+ 		endif (NOT LIB_OPENCL)
+ 		list( APPEND LINK_ADDITIONAL ${LIB_OPENCL} )
+ 	endif (OPENCL_LIB_PATH)
+ endif (EXPERIMENTAL_USE_OPENCL)
+ 
+ if (CYGWIN)
+-    set_target_properties( ${TARGET_NAME} PROPERTIES LINK_FLAGS ${CMAKE_CURRENT_SOURCE_DIR}/${DEF_FILE} )
++		set_target_properties( ${TARGET_NAME} PROPERTIES LINK_FLAGS ${CMAKE_CURRENT_SOURCE_DIR}/${DEF_FILE} )
+ endif (CYGWIN)
+ 
++# NOTE: have to link these separate libs to complete build!
+ target_link_libraries( ${TARGET_NAME} openvx-helper vx_debug ${LINK_ADDITIONAL} )
+ 
+ install ( TARGETS ${TARGET_NAME} 
+-          RUNTIME DESTINATION bin
+-          ARCHIVE DESTINATION lib
+-          LIBRARY DESTINATION bin )
+-		  
++					RUNTIME DESTINATION bin
++					ARCHIVE DESTINATION lib
++					LIBRARY DESTINATION lib ) # TODO: note this was changed because dynamic libs should got here
++			
+ set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${SAMPLE_FOLDER} )
+diff --git a/sample/targets/c_model/CMakeLists.txt b/sample/targets/c_model/CMakeLists.txt
+index 5f07441..46b9a17 100644
+--- a/sample/targets/c_model/CMakeLists.txt
++++ b/sample/targets/c_model/CMakeLists.txt
+@@ -50,6 +50,6 @@ target_link_libraries( ${TARGET_NAME} openvx-debug-lib openvx-extras-lib openvx-
+ install ( TARGETS ${TARGET_NAME} 
+           RUNTIME DESTINATION bin
+           ARCHIVE DESTINATION lib
+-          LIBRARY DESTINATION bin )
++					LIBRARY DESTINATION lib ) # Updated to put lib in right place - TODO: maybe only MACOS
+ 		  
+-set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${SAMPLE_TARGETS_FOLDER} )
+\ No newline at end of file
++set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${SAMPLE_TARGETS_FOLDER} )
+diff --git a/sample/vxu/CMakeLists.txt b/sample/vxu/CMakeLists.txt
+index 0bf1067..d5f93b2 100644
+--- a/sample/vxu/CMakeLists.txt
++++ b/sample/vxu/CMakeLists.txt
+@@ -50,6 +50,6 @@ target_link_libraries( ${TARGET_NAME} openvx openvx-helper )
+ install ( TARGETS ${TARGET_NAME} 
+           RUNTIME DESTINATION bin
+           ARCHIVE DESTINATION lib
+-          LIBRARY DESTINATION bin )
++					LIBRARY DESTINATION lib ) # Updated to put library in right place TODO: maybe only MACOS
+ 		  
+-set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${SAMPLE_FOLDER} )
+\ No newline at end of file
++set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${SAMPLE_FOLDER} )
