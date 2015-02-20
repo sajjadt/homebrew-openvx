@@ -8,7 +8,7 @@ class Openvx < Formula
 
   patch do
     url "https://raw.githubusercontent.com/machineswithvision/homebrew-openvx/master/openvx_sample_macos.diff"
-    sha1 "3e5db79d4218c9cdf46e993f0f076ac4ee06495c"
+    sha1 "9b9e0b871925ad844a44d23bcf3ccc6fb6feb348"
   end
 
   # TODO: add flags for OpenCL support and SDL demo/libs
