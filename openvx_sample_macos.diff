@@ -336,10 +336,10 @@ index 4ce7c66..493287c 100644
  set_target_properties( ${TARGET_NAME_1} PROPERTIES FOLDER ${LIBRARIES_EXTRAS_FOLDER} )
  set_target_properties( ${TARGET_NAME_2} PROPERTIES FOLDER ${LIBRARIES_EXTRAS_FOLDER} )
 diff --git a/sample/framework/CMakeLists.txt b/sample/framework/CMakeLists.txt
-index c3d99a4..b941997 100644
+index c3d99a4..b38b3ab 100644
 --- a/sample/framework/CMakeLists.txt
 +++ b/sample/framework/CMakeLists.txt
-@@ -40,40 +40,44 @@ FIND_SOURCES()
+@@ -40,40 +40,48 @@ FIND_SOURCES()
  if ((WIN32) OR (CYGWIN))
      set( DEF_FILE openvx.def )
  endif ((WIN32) OR (CYGWIN))
@@ -370,13 +370,17 @@ index c3d99a4..b941997 100644
  if (EXPERIMENTAL_USE_OPENCL)
 -    if (OPENCL_LIB_PATH)
 -	    find_library(LIB_OPENCL OpenCL HINTS ${OPENCL_LIB_PATH})
-+		if (OPENCL_LIB_PATH)
++	if (OPENCL_LIB_PATH)
 +			find_library(LIB_OPENCL OpenCL HINTS ${OPENCL_LIB_PATH})
  		if (NOT LIB_OPENCL)
 -		    message(FATAL_ERROR "Could not find OpenCL library")
 +				message(FATAL_ERROR "Could not find OpenCL library")
  		endif (NOT LIB_OPENCL)
  		list( APPEND LINK_ADDITIONAL ${LIB_OPENCL} )
++	else (OPENCL_LIB_PATH)	
++		if (APPLE)
++			list( APPEND LINK_ADDITIONAL "-framework OpenCL" )
++		endif (APPLE)
  	endif (OPENCL_LIB_PATH)
  endif (EXPERIMENTAL_USE_OPENCL)
  
@@ -412,6 +416,36 @@ index 5f07441..46b9a17 100644
 -set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${SAMPLE_TARGETS_FOLDER} )
 \ No newline at end of file
 +set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${SAMPLE_TARGETS_FOLDER} )
+diff --git a/sample/targets/opencl/vx_interface.h b/sample/targets/opencl/vx_interface.h
+index 968f1da..35f1ccf 100644
+--- a/sample/targets/opencl/vx_interface.h
++++ b/sample/targets/opencl/vx_interface.h
+@@ -32,8 +32,8 @@
+ 
+ #include <vx_internal.h>
+ 
+-#if defined(DARWIN)
+-#include <OpenCL/opencl.h>
++#if defined(__APPLE__) || defined(DARWIN)
++#include <OpenCL/OpenCL.h>
+ #else
+ #include <CL/cl.h>
+ #endif
+diff --git a/sample/tests/vx_test.c b/sample/tests/vx_test.c
+index 6ab9a75..6128d0c 100644
+--- a/sample/tests/vx_test.c
++++ b/sample/tests/vx_test.c
+@@ -1395,9 +1395,9 @@ vx_status vx_test_graph_opencl(int argc, char *argv[])
+             }
+ #if defined(EXPERIMENTAL_USE_TARGET)
+             vxReleaseTarget(&target);
+-#endif
+         }
+         else
++#endif
+         {
+             status = VX_SUCCESS; /* not an error */
+         }
 diff --git a/sample/vxu/CMakeLists.txt b/sample/vxu/CMakeLists.txt
 index 0bf1067..d5f93b2 100644
 --- a/sample/vxu/CMakeLists.txt

@@ -8,15 +8,21 @@ class Openvx < Formula
 
   patch do
     url "https://raw.githubusercontent.com/machineswithvision/homebrew-openvx/master/openvx_sample_macos.diff"
-    sha1 "9b9e0b871925ad844a44d23bcf3ccc6fb6feb348"
+    sha1 "7fd5ba520ce6bf006a762daabf4b803a9ec3827b"
   end
 
-  # TODO: add flags for OpenCL support and SDL demo/libs
+  # TODO: add more flags/support and SDL demo/libs etc?
+
+  option "with-opencl", "Attempt to build with MacOS OpenCL support."	
 
   def install
     args = std_cmake_args
     args << "-DAPPLE=1"
     args << "-DBUILD_X64=1"
+
+		if build.with? "opencl"
+			args << "-DEXPERIMENTAL_USE_OPENCL=1"
+		end
 
     mkdir "build" do
       system "cmake", "..", *args

@@ -9,7 +9,9 @@ Until such time as these changes are accepted by any official OpenVX maintainers
 		> brew tap machineswithvision/openvx
 		> brew install openvx
 
-Please note, there is currently no hardware acceleration enabled for MacOS!
+Please note, there is some (untested) hardware acceleration with OpenCL which can be enabled by:
+
+		> brew install openvx --with-opencl 
 
 Enjoy!
 
