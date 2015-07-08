@@ -1,14 +1,14 @@
 class Openvx < Formula
   homepage "https://www.khronos.org/openvx/"
   url "https://www.khronos.org/registry/vx/sample/openvx_sample_1.0.1.tar.bz2"
-  sha1 "144403e3b3e7e7f6f3a75371bfd3ca023466bbfa"
+  sha1 "bfbc6c3b37ff9bc671cb824e572bf9f73a9ddc3f"
   version "1.0.1" # Official version this snapshot implements
 
   depends_on "cmake" => :build
 
   patch do
     url "https://raw.githubusercontent.com/machineswithvision/homebrew-openvx/master/openvx_sample_macos.diff"
-    sha1 "7fd5ba520ce6bf006a762daabf4b803a9ec3827b"
+    sha1 "eee23142e3b42dfb90cf3a9873527a0a050512bc"
   end
 
   # TODO: add more flags/support and SDL demo/libs etc?
