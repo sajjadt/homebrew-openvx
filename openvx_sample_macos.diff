@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index da62eaa..b8d46bb 100644
+index 100afd4..8d520e2 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -38,6 +38,10 @@ if (WIN32)
+@@ -44,6 +44,10 @@ if (WIN32)
      include( CMake_windows_tools )
  elseif (ANDROID)
      include( CMake_android_tools )
@@ -13,15 +13,7 @@ index da62eaa..b8d46bb 100644
  else ()
      include( CMake_linux_tools )
  endif ()
-@@ -51,6 +55,7 @@ set(CMAKE_CONFIGURATION_TYPES
-   )
- set(CMAKE_CONFIGURATION_TYPES ${CMAKE_CONFIGURATION_TYPES} CACHE STRING "Available build configurations." FORCE)
- 
-+
- option( OPENVX_USE_TILING OFF )
- option( EXPERIMENTAL_USE_NODE_MEMORY OFF )
- option( EXPERIMENTAL_USE_OPENMP OFF )
-@@ -62,14 +67,18 @@ option( EXPERIMENTAL_USE_VARIANTS OFF )
+@@ -68,11 +72,14 @@ option( EXPERIMENTAL_USE_VARIANTS OFF )
  option( EXPERIMENTAL_USE_S16 OFF )
  option( EXPERIMENTAL_PLATFORM_SUPPORTS_16_FLOAT OFF )
  
@@ -39,44 +31,6 @@ index da62eaa..b8d46bb 100644
      set( EXPERIMENTAL_USE_DOT ON )
  endif (UNIX OR ANDROID)
  
-+
- add_definitions( -DOPENVX_BUILDING -DOPENVX_USE_SMP)
- if (OPENVX_USE_TILING)
-     add_definitions( -DOPENVX_USE_TILING )
-@@ -157,4 +166,4 @@ add_subdirectory( kernels )
- add_subdirectory( libraries )
- add_subdirectory( sample )
- add_subdirectory( tools )
--add_subdirectory( include )
-\ No newline at end of file
-+add_subdirectory( include )
-diff --git a/README.md b/README.md
-new file mode 100644
-index 0000000..79bbaea
---- /dev/null
-+++ b/README.md
-@@ -0,0 +1,21 @@
-+# Sample OpenVX for MacOS/iOS
-+
-+This is a modified version of [OpenVX 1.0](https://www.khronos.org/openvx/) checked into git and updated to build on MacOS/iOS.
-+
-+**NOTE: this sample implementation has no (as yet) accelerated functionality for Apple hardware.**
-+
-+The basic build can be  performed on the command line via: 
-+
-+    > mkdir build
-+    > cd build
-+    > cmake -DAPPLE=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/path/to/install/to -DBUILD_X64=1 ..
-+    > make
-+    > make install
-+
-+(This is effectively what the homebrew formula does.)
-+
-+Enjoy!
-+
-+*The MwV Team*
-+
-+
 diff --git a/cmake_utils/CMakeFuncs.txt b/cmake_utils/CMakeFuncs.txt
 index d70a1c1..2193a81 100644
 --- a/cmake_utils/CMakeFuncs.txt
@@ -432,10 +386,10 @@ index 968f1da..35f1ccf 100644
  #include <CL/cl.h>
  #endif
 diff --git a/sample/tests/vx_test.c b/sample/tests/vx_test.c
-index 6ab9a75..6128d0c 100644
+index dec2565..a9d4f04 100644
 --- a/sample/tests/vx_test.c
 +++ b/sample/tests/vx_test.c
-@@ -1395,9 +1395,9 @@ vx_status vx_test_graph_opencl(int argc, char *argv[])
+@@ -1397,9 +1397,9 @@ vx_status vx_test_graph_opencl(int argc, char *argv[])
              }
  #if defined(EXPERIMENTAL_USE_TARGET)
              vxReleaseTarget(&target);
