@@ -8,7 +8,7 @@ class Openvx < Formula
 
   patch do
     url "https://raw.githubusercontent.com/sajjadt/homebrew-openvx/master/openvx_sample_macos.diff"
-    sha1 "989e523386bdc3f6ac3fe126bd7326a6560a7fc6"
+    sha1 "065bcc0099d5633c429b655c98159b56cc731d8e"
   end
 
   # TODO: add more flags/support and SDL demo/libs etc?

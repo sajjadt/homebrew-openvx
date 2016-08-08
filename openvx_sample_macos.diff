@@ -1,6 +1,6 @@
 diff -Npur -x '.*' a/CMakeLists.txt b/CMakeLists.txt
 --- a/CMakeLists.txt	2016-06-17 10:02:34.000000000 -0700
-+++ b/CMakeLists.txt	2016-08-07 20:29:45.000000000 -0700
++++ b/CMakeLists.txt	2016-08-07 22:58:39.000000000 -0700
 @@ -50,6 +50,8 @@ if (WIN32)
      include( CMake_windows_tools )
  elseif (ANDROID)
@@ -27,6 +27,13 @@ diff -Npur -x '.*' a/CMakeLists.txt b/CMakeLists.txt
  if (OPENVX_USE_SMP)
      add_definitions( -DOPENVX_USE_SMP )
  endif (OPENVX_USE_SMP)
+@@ -171,6 +173,5 @@ add_subdirectory( helper )
+ add_subdirectory( kernels )
+ add_subdirectory( libraries )
+ add_subdirectory( sample )
+-add_subdirectory( sample-c++ )
+ add_subdirectory( tools )
+ add_subdirectory( include )
 diff -Npur -x '.*' a/cmake_utils/CMakeFuncs.txt b/cmake_utils/CMakeFuncs.txt
 --- a/cmake_utils/CMakeFuncs.txt	2016-06-17 10:02:15.000000000 -0700
 +++ b/cmake_utils/CMakeFuncs.txt	2016-08-07 20:32:23.000000000 -0700
