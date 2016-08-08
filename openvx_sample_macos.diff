@@ -11,7 +11,7 @@ diff -Npur -x '.*' a/CMakeLists.txt b/CMakeLists.txt
      include( CMake_linux_tools )
  endif ()
 @@ -76,13 +78,13 @@ option( EXPERIMENTAL_PLATFORM_SUPPORTS_1
-
+ 
  if (UNIX OR ANDROID)
      add_definitions( -D_XOPEN_SOURCE=700 -D_BSD_SOURCE=1 -D_GNU_SOURCE=1 )
 -    if (NOT (CYGWIN OR ANDROID))
@@ -21,8 +21,8 @@ diff -Npur -x '.*' a/CMakeLists.txt b/CMakeLists.txt
 +    endif (NOT (CYGWIN OR ANDROID OR APPLE))
      set( EXPERIMENTAL_USE_DOT ON )
  endif (UNIX OR ANDROID)
-
--add_definitions( -DOPENVX_BUILDING )
+ 
+-add_definitions( -DOPENVX_BUILDING ) 
 +add_definitions( -DOPENVX_BUILDING )
  if (OPENVX_USE_SMP)
      add_definitions( -DOPENVX_USE_SMP )
@@ -34,7 +34,7 @@ diff -Npur -x '.*' a/cmake_utils/CMakeFuncs.txt b/cmake_utils/CMakeFuncs.txt
  function ( FIND_SOURCES )
      file( GLOB HEADER_FILES_TMP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h *.hpp )
      file( GLOB SOURCE_FILES_TMP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.c *.cpp *.cc )
--
+-	
 +
  	if (${ARGC} EQUAL 0 )
          set( FILER_OUT_REGEXP "not used regexp" )
@@ -158,23 +158,23 @@ diff -Npur -x '.*' a/debug/CMakeLists.txt b/debug/CMakeLists.txt
 +++ b/debug/CMakeLists.txt	2016-08-07 20:38:29.000000000 -0700
 @@ -31,7 +31,7 @@
  set( TARGET_NAME vx_debug )
-
+ 
  include_directories( BEFORE
--                     ${CMAKE_CURRENT_SOURCE_DIR}
+-                     ${CMAKE_CURRENT_SOURCE_DIR} 
 +                     ${CMAKE_CURRENT_SOURCE_DIR}
  					 ${CMAKE_SOURCE_DIR}/include )
-
+ 
  FIND_SOURCES()
 @@ -39,9 +39,9 @@ FIND_SOURCES()
  # add a target named ${TARGET_NAME}
  add_library (${TARGET_NAME} ${SOURCE_FILES})
-
--install ( TARGETS ${TARGET_NAME}
+ 
+-install ( TARGETS ${TARGET_NAME} 
 +install ( TARGETS ${TARGET_NAME}
            RUNTIME DESTINATION bin
 -          ARCHIVE DESTINATION bin
 -          LIBRARY DESTINATION bin )
--
+-		  
 +          ARCHIVE DESTINATION lib
 +          LIBRARY DESTINATION lib )
 +
@@ -184,23 +184,23 @@ diff -Npur -x '.*' a/helper/CMakeLists.txt b/helper/CMakeLists.txt
 +++ b/helper/CMakeLists.txt	2016-08-07 20:38:41.000000000 -0700
 @@ -31,7 +31,7 @@
  set( TARGET_NAME openvx-helper )
-
+ 
  include_directories( BEFORE
--                     ${CMAKE_CURRENT_SOURCE_DIR}
+-                     ${CMAKE_CURRENT_SOURCE_DIR} 
 +                     ${CMAKE_CURRENT_SOURCE_DIR}
  					 ${CMAKE_SOURCE_DIR}/include )
-
+ 
  FIND_SOURCES()
 @@ -39,9 +39,9 @@ FIND_SOURCES()
  # add a target named ${TARGET_NAME}
  add_library (${TARGET_NAME} ${SOURCE_FILES})
-
--install ( TARGETS ${TARGET_NAME}
+ 
+-install ( TARGETS ${TARGET_NAME} 
 +install ( TARGETS ${TARGET_NAME}
            RUNTIME DESTINATION bin
 -          ARCHIVE DESTINATION bin
 -          LIBRARY DESTINATION bin )
--
+-		  
 +          ARCHIVE DESTINATION lib
 +          LIBRARY DESTINATION lib )
 +
@@ -212,21 +212,21 @@ diff -Npur -x '.*' a/kernels/c_model/CMakeLists.txt b/kernels/c_model/CMakeLists
                       ${CMAKE_CURRENT_SOURCE_DIR}
                       ${CMAKE_SOURCE_DIR}/include
                       ${CMAKE_SOURCE_DIR}/debug )
--
+-					 
 +
  FIND_SOURCES()
-
+ 
  # add a target named ${TARGET_NAME}
 @@ -42,9 +42,9 @@ add_library (${TARGET_NAME} ${SOURCE_FIL
-
+ 
  target_link_libraries( ${TARGET_NAME} openvx )
-
--install ( TARGETS ${TARGET_NAME}
+ 
+-install ( TARGETS ${TARGET_NAME} 
 +install ( TARGETS ${TARGET_NAME}
            RUNTIME DESTINATION bin
 -          ARCHIVE DESTINATION bin
 -          LIBRARY DESTINATION bin )
--
+-		  
 +          ARCHIVE DESTINATION lib
 +          LIBRARY DESTINATION lib )
 +
@@ -237,13 +237,13 @@ diff -Npur -x '.*' a/kernels/debug/CMakeLists.txt b/kernels/debug/CMakeLists.txt
 @@ -39,9 +39,9 @@ FIND_SOURCES()
  # add a target named ${TARGET_NAME}
  add_library (${TARGET_NAME} ${SOURCE_FILES})
-
--install ( TARGETS ${TARGET_NAME}
+ 
+-install ( TARGETS ${TARGET_NAME} 
 +install ( TARGETS ${TARGET_NAME}
            RUNTIME DESTINATION bin
 -          ARCHIVE DESTINATION bin
 -          LIBRARY DESTINATION bin )
--
+-		  
 +          ARCHIVE DESTINATION lib
 +          LIBRARY DESTINATION lib )
 +
@@ -254,13 +254,13 @@ diff -Npur -x '.*' a/kernels/extras/CMakeLists.txt b/kernels/extras/CMakeLists.t
 @@ -39,9 +39,9 @@ FIND_SOURCES()
  # add a target named ${TARGET_NAME}
  add_library (${TARGET_NAME} ${SOURCE_FILES})
-
--install ( TARGETS ${TARGET_NAME}
+ 
+-install ( TARGETS ${TARGET_NAME} 
 +install ( TARGETS ${TARGET_NAME}
            RUNTIME DESTINATION bin
 -          ARCHIVE DESTINATION bin
 -          LIBRARY DESTINATION bin )
--
+-		  
 +          ARCHIVE DESTINATION lib
 +          LIBRARY DESTINATION lib )
 +
@@ -272,18 +272,18 @@ diff -Npur -x '.*' a/libraries/debug/CMakeLists.txt b/libraries/debug/CMakeLists
                       ${CMAKE_CURRENT_SOURCE_DIR}
                       ${CMAKE_SOURCE_DIR}/include
                       ${CMAKE_SOURCE_DIR}/kernels/debug )
--
+-					 
 +
  if ((WIN32) OR (CYGWIN))
     add_definitions( ${OPENVX_BUILDING_EXPORT_DEF} )
  endif ((WIN32) OR (CYGWIN))
 @@ -59,8 +59,8 @@ target_link_libraries( ${TARGET_NAME_2}
-
+ 
  install ( TARGETS ${TARGET_NAME_1} ${TARGET_NAME_2}
            RUNTIME DESTINATION bin
 -          ARCHIVE DESTINATION bin
 -          LIBRARY DESTINATION bin )
--
+-		  
 +          ARCHIVE DESTINATION lib
 +          LIBRARY DESTINATION lib )
 +
@@ -296,18 +296,18 @@ diff -Npur -x '.*' a/libraries/extras/CMakeLists.txt b/libraries/extras/CMakeLis
  if ((WIN32) OR (CYGWIN))
     add_definitions( ${OPENVX_BUILDING_EXPORT_DEF} )
  endif ((WIN32) OR (CYGWIN))
--
+-					 
 +
  # add a target named ${TARGET_NAME}
  add_library (${TARGET_NAME_1} vx_extras_lib.c)
-
+ 
 @@ -61,8 +61,8 @@ target_link_libraries( ${TARGET_NAME_2}
-
+ 
  install ( TARGETS ${TARGET_NAME_1} ${TARGET_NAME_2}
            RUNTIME DESTINATION bin
 -          ARCHIVE DESTINATION bin
 -          LIBRARY DESTINATION bin )
--
+-		  
 +          ARCHIVE DESTINATION lib
 +          LIBRARY DESTINATION lib )
 +
@@ -320,20 +320,20 @@ diff -Npur -x '.*' a/sample/framework/CMakeLists.txt b/sample/framework/CMakeLis
  include_directories( BEFORE
                       ${CMAKE_CURRENT_SOURCE_DIR}
                       ${CMAKE_CURRENT_SOURCE_DIR}/../include
--					 ${CMAKE_SOURCE_DIR}/include
--					 ${CMAKE_SOURCE_DIR}/debug
+-					 ${CMAKE_SOURCE_DIR}/include 
+-					 ${CMAKE_SOURCE_DIR}/debug 
 +					 ${CMAKE_SOURCE_DIR}/include
 +					 ${CMAKE_SOURCE_DIR}/debug
  					 ${OPENCL_INCLUDE_PATH} )
--
+-					 
 +
  if ((WIN32) OR (CYGWIN))
     add_definitions( ${OPENVX_BUILDING_EXPORT_DEF} )
  endif ((WIN32) OR (CYGWIN))
--
+-					 
 +
  FIND_SOURCES()
-
+ 
  if ((WIN32) OR (CYGWIN))
 @@ -57,7 +57,11 @@ if (NOT WIN32)
  	if (ANDROID)
@@ -347,7 +347,7 @@ diff -Npur -x '.*' a/sample/framework/CMakeLists.txt b/sample/framework/CMakeLis
 +      endif (APPLE)
  	endif (ANDROID)
  endif (NOT WIN32)
-
+ 
 @@ -68,7 +72,11 @@ if (EXPERIMENTAL_USE_OPENCL)
  		    message(FATAL_ERROR "Could not find OpenCL library")
  		endif (NOT LIB_OPENCL)
@@ -359,18 +359,18 @@ diff -Npur -x '.*' a/sample/framework/CMakeLists.txt b/sample/framework/CMakeLis
 +    endif (APPLE)
 +  endif (OPENCL_LIB_PATH)
  endif (EXPERIMENTAL_USE_OPENCL)
-
+ 
  if (CYGWIN)
 @@ -77,9 +85,9 @@ endif (CYGWIN)
-
+ 
  target_link_libraries( ${TARGET_NAME} openvx-helper vx_debug ${LINK_ADDITIONAL} )
-
--install ( TARGETS ${TARGET_NAME}
+ 
+-install ( TARGETS ${TARGET_NAME} 
 +install ( TARGETS ${TARGET_NAME}
            RUNTIME DESTINATION bin
            ARCHIVE DESTINATION lib
 -          LIBRARY DESTINATION bin )
--
+-		  
 +          LIBRARY DESTINATION lib )
 +
  set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${SAMPLE_FOLDER} )
@@ -381,21 +381,21 @@ diff -Npur -x '.*' a/sample/targets/c_model/CMakeLists.txt b/sample/targets/c_mo
                       ${CMAKE_CURRENT_SOURCE_DIR}
  					 ${CMAKE_CURRENT_SOURCE_DIR}/../../include
  					 ${CMAKE_SOURCE_DIR}/include
--                     ${CMAKE_SOURCE_DIR}/kernels/c_model
+-                     ${CMAKE_SOURCE_DIR}/kernels/c_model					 
 +                     ${CMAKE_SOURCE_DIR}/kernels/c_model
  					 ${CMAKE_SOURCE_DIR}/debug
                       ${OPENCL_INCLUDE_PATH} )
-
+ 
 @@ -53,9 +53,9 @@ endif (CYGWIN)
-
+ 
  target_link_libraries( ${TARGET_NAME} openvx-debug-lib openvx-extras-lib openvx-helper openvx-c_model-lib openvx vxu )
-
--install ( TARGETS ${TARGET_NAME}
+ 
+-install ( TARGETS ${TARGET_NAME} 
 +install ( TARGETS ${TARGET_NAME}
            RUNTIME DESTINATION bin
            ARCHIVE DESTINATION lib
 -          LIBRARY DESTINATION bin )
--
+-		  
 -set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${SAMPLE_TARGETS_FOLDER} )
 \ No newline at end of file
 +          LIBRARY DESTINATION lib )
@@ -405,15 +405,15 @@ diff -Npur -x '.*' a/sample/targets/opencl/vx_interface.h b/sample/targets/openc
 --- a/sample/targets/opencl/vx_interface.h	2016-06-17 10:02:31.000000000 -0700
 +++ b/sample/targets/opencl/vx_interface.h	2016-08-07 20:46:45.000000000 -0700
 @@ -1,4 +1,4 @@
--/*
+-/* 
 +/*
   * Copyright (c) 2012-2016 The Khronos Group Inc.
   *
   * Permission is hereby granted, free of charge, to any person obtaining a
 @@ -37,7 +37,7 @@
-
+ 
  #include <vx_internal.h>
-
+ 
 -#if defined(DARWIN)
 +#if defined(DARWIN) || defined(__APPLE__)
  #include <OpenCL/opencl.h>
@@ -421,7 +421,7 @@ diff -Npur -x '.*' a/sample/targets/opencl/vx_interface.h b/sample/targets/openc
  #include <CL/cl.h>
 @@ -112,5 +112,3 @@ extern vx_cl_kernel_description_t not_ke
  extern vx_cl_kernel_description_t histogram_kernel;
-
+ 
  #endif
 -
 -
@@ -432,26 +432,26 @@ diff -Npur -x '.*' a/sample/vxu/CMakeLists.txt b/sample/vxu/CMakeLists.txt
                       ${CMAKE_CURRENT_SOURCE_DIR}/../include
                       ${CMAKE_SOURCE_DIR}/debug
                       ${CMAKE_SOURCE_DIR}/include )
--
+-					 
 +
  if ((WIN32) OR (CYGWIN))
     add_definitions( ${OPENVX_BUILDING_EXPORT_DEF} )
  endif ((WIN32) OR (CYGWIN))
--
+-					 
 +
  FIND_SOURCES()
-
+ 
  if ((WIN32) OR (CYGWIN))
 @@ -55,9 +55,9 @@ endif (CYGWIN)
-
+ 
  target_link_libraries( ${TARGET_NAME} openvx openvx-helper )
-
--install ( TARGETS ${TARGET_NAME}
+ 
+-install ( TARGETS ${TARGET_NAME} 
 +install ( TARGETS ${TARGET_NAME}
            RUNTIME DESTINATION bin
            ARCHIVE DESTINATION lib
 -          LIBRARY DESTINATION bin )
--
+-		  
 -set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER ${SAMPLE_FOLDER} )
 \ No newline at end of file
 +          LIBRARY DESTINATION lib )
