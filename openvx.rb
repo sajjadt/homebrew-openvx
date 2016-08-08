@@ -7,8 +7,8 @@ class Openvx < Formula
   depends_on "cmake" => :build
 
   patch do
-    url "https://raw.githubusercontent.com/machineswithvision/homebrew-openvx/master/openvx_sample_macos.diff"
-    sha1 "eee23142e3b42dfb90cf3a9873527a0a050512bc"
+    url "https://raw.githubusercontent.com/sajjadt/homebrew-openvx/master/openvx_sample_macos.diff"
+    sha1 "57df7c6333572fe5c7b487e462ef6bfa3e108a72"
   end
 
   # TODO: add more flags/support and SDL demo/libs etc?
