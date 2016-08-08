@@ -2,7 +2,7 @@ class Openvx < Formula
   homepage "https://www.khronos.org/openvx/"
   url "https://www.khronos.org/registry/vx/sample/openvx_sample_1.1.tar.bz2"
   sha1 "48fd4854ccf0212b2c90c899f89f910401499c67"
-  version "1.0.1" # Official version this snapshot implements
+  version "1.1" # Official version this snapshot implements
 
   depends_on "cmake" => :build
 
