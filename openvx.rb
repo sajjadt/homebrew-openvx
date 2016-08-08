@@ -1,8 +1,8 @@
 class Openvx < Formula
   homepage "https://www.khronos.org/openvx/"
-  url "https://www.khronos.org/registry/vx/sample/openvx_sample_1.0.1.tar.bz2"
-  sha1 "bfbc6c3b37ff9bc671cb824e572bf9f73a9ddc3f"
-  version "1.0.1" # Official version this snapshot implements
+  url "https://www.khronos.org/registry/vx/sample/openvx_sample_1.1.tar.bz2"
+  sha1 "48fd4854ccf0212b2c90c899f89f910401499c67"
+  version "1.0.1" # Official version this snapshot implements
 
   depends_on "cmake" => :build
 
@@ -13,7 +13,7 @@ class Openvx < Formula
 
   # TODO: add more flags/support and SDL demo/libs etc?
 
-  option "with-opencl", "Attempt to build with MacOS OpenCL support."	
+  option "with-opencl", "Attempt to build with MacOS OpenCL support."
 
   def install
     args = std_cmake_args
