@@ -6,10 +6,17 @@ class Openvx < Formula
 
   depends_on "cmake" => :build
 
+#  patch do
+#    url "https://raw.githubusercontent.com/sajjadt/homebrew-openvx/master/openvx_sample_macos.diff"
+#    sha1 "065bcc0099d5633c429b655c98159b56cc731d8e"
+#  end
+
   patch do
-    url "https://raw.githubusercontent.com/sajjadt/homebrew-openvx/master/openvx_sample_macos.diff"
-    sha1 "065bcc0099d5633c429b655c98159b56cc731d8e"
+    url "https://raw.githubusercontent.com/sajjadt/homebrew-openvx/master/openvx_sample_with_user_kernels.diff"
+    sha1 "ca5fe3520d47025a6f9b9df3e87b0304eff42c22"
   end
+    
+
 
   # TODO: add more flags/support and SDL demo/libs etc?
 
