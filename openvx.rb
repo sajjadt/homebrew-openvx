@@ -13,9 +13,9 @@ class Openvx < Formula
 
   patch do
     url "https://raw.githubusercontent.com/sajjadt/homebrew-openvx/master/openvx_sample_with_user_kernels.diff"
-    sha1 "ca5fe3520d47025a6f9b9df3e87b0304eff42c22"
+    sha1 "4b72d4717b5c9804f4372ef5453e31b45945b2bb"
   end
-    
+
 
 
   # TODO: add more flags/support and SDL demo/libs etc?
